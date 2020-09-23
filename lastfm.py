@@ -4,7 +4,7 @@ import time, requests, json, datetime, requests_cache
 url = 'http://ws.audioscrobbler.com/2.0/'
 USER_AGENT = 'Dataquest'
 headers = {'user-agent': USER_AGENT}
-counterCache = 0 #keep track of number of times cache was utilized
+counterCache,counterDup = 0,0 #keep track of number of times cache was utilized, and how many duplicates caught
 outData = [] 
 
 requests_cache.install_cache('requests_cache') #creates a local cache in directory
@@ -96,12 +96,14 @@ def getTimeOfDay(dt):
 def cleanseAndWrite(inFile, outputFile,API_KEY):
     inData = json.load(open(inFile))
     global outData
+    global counterDup
     trName = inData['recenttracks']['track'][1]['name']
     arName = inData['recenttracks']['track'][1]['artist']['#text']
     dur = lastfm_get_track_duration({
         'artist': arName,
         'track': trName
     },user['API_KEY'])
+    prevTime = "hi" 
     # Ignore, first record as it could have currently playing, which doesn't have time
     prevDt = 0
     for ind, d in enumerate(inData['recenttracks']['track'][1:]):       
@@ -129,7 +131,11 @@ def cleanseAndWrite(inFile, outputFile,API_KEY):
             if duration == 0:   duration = 300
             prevDt = d['date']['uts']
             each['durationSec'] = duration
-        outData.append(each)
+        if prevTime != time: # This handles duplicate records having same timestamp (preventing upload to dynamo)
+            outData.append(each)
+            prevTime = time
+        else:
+            counterDup += 1
 
 if __name__ == "__main__":
     # Which user credentials to use
@@ -146,6 +152,7 @@ if __name__ == "__main__":
             cleanseAndWrite(user['inFile'],user['outFile'],user['API_KEY'])
         outputToFile(user['outFile'])
         print("No.of calls to artist tags cache: " + str(counterCache)) 
+        print("Duplicates Handeled: " + str(counterDup))
     else:
         jprint(numPages)
         # Dump list into file
