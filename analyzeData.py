@@ -35,7 +35,7 @@ def analyzeFile(inFile,currentDate):
         else:
             break
         usageThroughDay(d['TimeOfDay'],d['durationSec'])
-        
+              
     # Convert to min
     print("Songs played today: "+str(counter))
 

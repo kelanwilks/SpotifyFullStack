@@ -1,5 +1,4 @@
-import pylast, time
-import requests, json, datetime, requests_cache
+import time, requests, json, datetime, requests_cache
 
 # define headers and URL
 url = 'http://ws.audioscrobbler.com/2.0/'
@@ -21,7 +20,11 @@ def getNumberPages(payload, API_KEY, username):
     payload['user'] = username
     payload['format'] = 'json'
     response = requests.get(url, headers=headers, params=payload)
-    return response.json()['recenttracks']['@attr']['totalPages']
+    respCode = response.status_code
+    if respCode == 200:
+        return response.json()['recenttracks']['@attr']['totalPages'], respCode
+    else: # If status code is not 200, return json response as first param
+        return response.json(), response 
 
 def getRecentlyPlayed(payload, API_KEY, username,inFile,pgNum):
     # Add API key and format to the payload - need to add other pages
@@ -33,7 +36,6 @@ def getRecentlyPlayed(payload, API_KEY, username,inFile,pgNum):
     response = requests.get(url, headers=headers, params=payload)
     with open(inFile,'w') as outfile:
         json.dump(response.json(),outfile,indent=4)
-    
 
 def getTopGenreTags(payload,API_KEY):
     global counterCache
@@ -59,6 +61,10 @@ def lastfm_get_track_duration(payload,API_KEY):
     obj = response.json()['track']['duration']
     fin = int(int(obj) * 0.001) #to convert to seconds
     return fin 
+
+def outputToFile(fileName):
+    with open(fileName,'w') as outfile:
+        json.dump(outData,outfile,indent=4)
 
 def jprint(obj):
     text = json.dumps(obj, sort_keys=True, indent=4)
@@ -130,21 +136,23 @@ if __name__ == "__main__":
     print("Fetching User API Credentials")
     user = getUserCreds('TeJas','loginCreds.json')
 
-    numPages = getNumberPages({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'])
-    for x in range(1,int(numPages)+1):
-        print("Processing page number: "+str(x))
-        getRecentlyPlayed({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'],user['inFile'],x)
-        cleanseAndWrite(user['inFile'],user['outFile'],user['API_KEY'])
-
-    # Dump list into file
-    with open(user['outFile'],'w') as outfile:
-        json.dump(outData,outfile,indent=4)
-    # print("Getting Recent Tracks... ")
-    # getRecentlyPlayed({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'],user['inFile'])
-    # print("Cleansing Output & Writing to Json file" )
-    # cleanseAndWrite(user['inFile'],user['outFile'],user['API_KEY'])
-    print("No.of calls to artist tags cache: " + str(counterCache))
-
+    numPages,status = getNumberPages({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'])
+    
+    print(str(status)) #Only proceed with code if status code is 200
+    if status == 200:
+        for x in range(1,int(numPages)+1):
+            print("Processing page number: "+str(x))
+            getRecentlyPlayed({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'],user['inFile'],x)
+            cleanseAndWrite(user['inFile'],user['outFile'],user['API_KEY'])
+        outputToFile(user['outFile'])
+        print("No.of calls to artist tags cache: " + str(counterCache)) 
+    else:
+        jprint(numPages)
+        # Dump list into file
+        # with open(user['outFile'],'w') as outfile:
+        #     json.dump(outData,outfile,indent=4)
+    
+    
 
 
     
