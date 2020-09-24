@@ -51,29 +51,18 @@ def populateTbl(dynamodb,dbTblName,fileIn):
             TimeOfDay = song['TimeOfDay']
             durationSec = int(song['durationSec'])
             batch.put_item(Item=song)
-
-    
+ 
 def deleteTbl(dynamodb,dbTblName):
     table = dynamodb.Table(dbTblName)
     table.delete()
 
+
 if __name__ == "__main__":
     dbTblName = 'spotifyTbl'
-    formattedFile = 'outputTest.json'
+    formattedFile = 'outputLastFm.json'
 
     # Establishing DynamoDb Connection
     dynamodb = boto3.resource('dynamodb')
     # createDb(dynamodb,dbTblName)
     # deleteTbl(dynamodb,dbTblName)
     populateTbl(dynamodb,dbTblName,formattedFile)
-
-# Use batch writing
-# with table.batch_writer() as batch:
-#     for i in range(50):
-#         batch.put_item(
-#             Item={
-#                 'account_type': 'anonymous',
-#                 'username': 'user' + str(i),
-#                 'first_name': 'unknown',
-#                 'last_name': 'unknown'
-#             }

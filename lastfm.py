@@ -1,4 +1,6 @@
 import time, requests, json, datetime, requests_cache
+from datetime import timezone
+from datetime import timedelta
 
 # define headers and URL
 url = 'http://ws.audioscrobbler.com/2.0/'
@@ -32,7 +34,7 @@ def getRecentlyPlayed(payload, API_KEY, username,inFile,pgNum):
     payload['user'] = username
     payload['format'] = 'json'
     payload['page'] = str(pgNum)
-    
+
     response = requests.get(url, headers=headers, params=payload)
     with open(inFile,'w') as outfile:
         json.dump(response.json(),outfile,indent=4)
@@ -137,28 +139,42 @@ def cleanseAndWrite(inFile, outputFile,API_KEY):
         else:
             counterDup += 1
 
+# Returns previous day time range, so that batch can be run next day
+def getTodayTimestampRnge():
+    test = datetime.datetime.today()
+    start = datetime.datetime(test.year,test.month,test.day) + timedelta(hours=7) - timedelta(days=1)
+    finStart = (start - datetime.datetime(1970,1,1)).total_seconds()
+    end = start + timedelta(days=1)
+    finEnd = (end - datetime.datetime(1970,1,1)).total_seconds()
+    return int(finStart), int(finEnd) #has to be in INT for api call
+
 if __name__ == "__main__":
     # Which user credentials to use
     print("Fetching User API Credentials")
     user = getUserCreds('TeJas','loginCreds.json')
+    start, end = getTodayTimestampRnge()
 
-    numPages,status = getNumberPages({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'])
+    #Edit date range here
+    numPages,status =  getNumberPages({'method': 'user.getrecenttracks','from': start,'to':end},user['API_KEY'],user['username'])
     
     print(str(status)) #Only proceed with code if status code is 200
+
     if status == 200:
         for x in range(1,int(numPages)+1):
             print("Processing page number: "+str(x))
-            getRecentlyPlayed({'method': 'user.getrecenttracks'},user['API_KEY'],user['username'],user['inFile'],x)
+            #Edit date range here
+            getRecentlyPlayed({'method': 'user.getrecenttracks','from': start,'to':end
+            },user['API_KEY'],user['username'],user['inFile'],x)
             cleanseAndWrite(user['inFile'],user['outFile'],user['API_KEY'])
         outputToFile(user['outFile'])
         print("No.of calls to artist tags cache: " + str(counterCache)) 
         print("Duplicates Handeled: " + str(counterDup))
     else:
         jprint(numPages)
-        # Dump list into file
-        # with open(user['outFile'],'w') as outfile:
-        #     json.dump(outData,outfile,indent=4)
+
+
     
+
     
 
 
