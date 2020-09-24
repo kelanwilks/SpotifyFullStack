@@ -142,6 +142,7 @@ def cleanseAndWrite(inFile, outputFile,API_KEY):
 # Returns previous day time range, so that batch can be run next day
 def getTodayTimestampRnge():
     test = datetime.datetime.today()
+    # Account for time zone, PST -> UTC (7hrs diff)
     start = datetime.datetime(test.year,test.month,test.day) + timedelta(hours=7) - timedelta(days=1)
     finStart = (start - datetime.datetime(1970,1,1)).total_seconds()
     end = start + timedelta(days=1)

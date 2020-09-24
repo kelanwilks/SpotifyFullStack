@@ -56,7 +56,6 @@ def deleteTbl(dynamodb,dbTblName):
     table = dynamodb.Table(dbTblName)
     table.delete()
 
-
 if __name__ == "__main__":
     dbTblName = 'spotifyTbl'
     formattedFile = 'outputLastFm.json'
@@ -65,4 +64,6 @@ if __name__ == "__main__":
     dynamodb = boto3.resource('dynamodb')
     # createDb(dynamodb,dbTblName)
     # deleteTbl(dynamodb,dbTblName)
-    populateTbl(dynamodb,dbTblName,formattedFile)
+    # populateTbl(dynamodb,dbTblName,formattedFile)
+
+    
