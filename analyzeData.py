@@ -2,9 +2,10 @@ import time, json, datetime
 from datetime import date
 from collections import Counter
 
-counter, morning, noon, evening, night = 0,0,0,0,0
+songCount, numGenreTags, morning, noon, evening, night = 0,0,0,0,0,0
 morningDur, noonDur, eveningDur, nightDur = 0,0,0,0
 outData = {}
+topGenreDict = {}
 
 def getUserCreds(user,inFile):
     inData = json.load(open(inFile))
@@ -36,7 +37,17 @@ def usageThroughDay(timeOfDay,duration):
         night += 1
         nightDur += duration
 
-def showUsageMetric():
+# Unpacks 0-3 genre tags per song entry, and put into dict
+def getTopGenres(input):
+    global numGenreTags
+    if len(input) != 0:
+        stripped = input.split(",")
+        numGenreTags += len(stripped)
+        for tag in stripped:
+            finTag = tag.strip()
+            topGenreDict[finTag] = topGenreDict.get(finTag,0) + 1
+    
+def showUsageMetric(count):
     print("Songs Throughout the day")
     morningDurMin, noonDurMin, eveningDurMin, nightDurMin = int(morningDur/60), int(noonDur/60), int(eveningDur/60), int(nightDur/60)
     usage= {}
@@ -45,34 +56,45 @@ def showUsageMetric():
     durOfSongs = {"Morning": morningDurMin, "Afternoon": noonDurMin, "Evening": eveningDurMin, "Night": nightDurMin}
     usage['durationOfSongs'] = durOfSongs
     usage['totalMins'] = morningDurMin + noonDurMin + eveningDurMin + nightDurMin
+    usage['totalSongs'] = count
     return usage
 
-# def getTopArtists():
+# Parse through counter object and converts to dict object
+# Parameters (input dictionary, metric name, number of entries to display)
+def writeCounterOutput(inDict,metric,num):
+    global outData
+    inList = Counter(inDict).most_common(num)
+    eachItem = {}
+    for ind in range(len(inList)):
+        eachItem[str(inList[ind][0])] = inList[ind][1]
+    outData[metric] = eachItem
 
 def analyzeFile(inFile,currentDate):
-    global counter
+    global songCount
     global outData
+    global topGenreDict
+    global numGenreTags
     artistDict = {}
     trackDict = {}
     inData = json.load(open(inFile))
     for ind, d in enumerate(inData):
-        counter += 1
         # if d['Date'] == currentDate: #In order to only process current date's
         #     counter += 1
         # else:
         #     break
+        songCount += 1
         usageThroughDay(d['TimeOfDay'],d['durationSec'])
         artistDict[d['Artist']] = artistDict.get(d['Artist'],0) + 1
         trackDict[d['SongName']] = trackDict.get(d['SongName'],0) + 1
+        getTopGenres(d['ArtistTopTags'])
 
-    usage = showUsageMetric()
+    usage = showUsageMetric(songCount)
     outData['usageStats'] = usage
-    topArtists = Counter(artistDict).most_common(3)
-    topTracks = Counter(trackDict).most_common(3)
-    print(topArtists)
-    print(topTracks)
-    # Convert to min
-    print("Songs played today: "+str(counter))
+    writeCounterOutput(artistDict,"topArtists",5)
+    writeCounterOutput(trackDict,"topTracks",4)
+    writeCounterOutput(topGenreDict,"topGenreTags",5)
+    outData['totalGenreTags'] = numGenreTags
+
 
 if __name__ == "__main__":
     # print("Running Data Analyzer")
@@ -83,6 +105,5 @@ if __name__ == "__main__":
     curDate = date.today().strftime("%Y-%m-%d") #Passing in current date
     analyzeFile(user['outFile'],curDate)
     outputToFile('finalMetrics.json')
-
     
     

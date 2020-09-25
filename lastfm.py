@@ -147,6 +147,7 @@ def getTodayTimestampRnge():
     finStart = (start - datetime.datetime(1970,1,1)).total_seconds()
     end = start + timedelta(days=1)
     finEnd = (end - datetime.datetime(1970,1,1)).total_seconds()
+    print("Start Dates: " + str(start)+ "  -- End Date: " +str(end))
     return int(finStart), int(finEnd) #has to be in INT for api call
 
 if __name__ == "__main__":
@@ -158,8 +159,6 @@ if __name__ == "__main__":
     #Edit date range here
     numPages,status =  getNumberPages({'method': 'user.getrecenttracks','from': start,'to':end},user['API_KEY'],user['username'])
     
-    print(str(status)) #Only proceed with code if status code is 200
-
     if status == 200:
         for x in range(1,int(numPages)+1):
             print("Processing page number: "+str(x))
