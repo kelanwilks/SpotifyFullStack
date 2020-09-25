@@ -28,6 +28,10 @@ Create a json file "loginCreds.json" and enter in the following information, rep
 ```
 Once this is done, in the main function of lastfm.py, update the getUserCreds() function to your credsName
 
+## Setup AWS CLI
+* Install AWS CLI 	https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+* Configure AWS file. USE us-east-1.    https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html
+
 ## Running file
 * Json files are automatically created when project is run
 * python lastfm.py -> this obtains recent tracks from lastfm.api, cleans/adds data and dumps a json file
