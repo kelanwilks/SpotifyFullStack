@@ -5,6 +5,7 @@ Full Stack project sourcing data from Spotify
 *	Install Homebrew
 *	Install Pyenv (Optional)(python version management). Use python version 3 for this project
 *	pip install requests-cache
+*   pip install boto3   (This is the AWS python SDK)
 
 ## Setup Last.FM
 * Create Last.Fm account https://secure.last.fm/login
